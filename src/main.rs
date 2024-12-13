@@ -24,6 +24,11 @@ mod riscv {
     const SPI_STATUS_REG: *const u32 = 0x40003004 as *const u32;  // Statut SPI
     const SPI_DATA_REG: *mut u32 = 0x40003008 as *mut u32;  // Registre de données SPI
 
+    // Déclaration des registres I2C
+    const I2C_CTRL_REG: *mut u32 = 0x40004000 as *mut u32;
+    const I2C_STATUS_REG: *const u32 = 0x40004004 as *const u32;
+    const I2C_DATA_REG: *mut u32 = 0x40004008 as *mut u32;
+
     // Fonctions pour configurer un GPIO en sortie et entrée
     fn set_gpio_output(gpio_num: u32) {
         unsafe {
@@ -79,6 +84,34 @@ mod riscv {
         }
     }
 
+    // Initialisation I2C
+    fn i2c_init() {
+        unsafe {
+            *I2C_CTRL_REG = 0x01;  // Activer le contrôleur I2C
+        }
+    }
+
+    // Écriture d'un octet sur le bus I2C
+    fn i2c_write_byte(addr: u8, data: u8) {
+        unsafe {
+            *I2C_DATA_REG = ((addr as u32) << 1) | 0;  // Adresse en écriture
+            while *I2C_STATUS_REG & 0x01 == 0 {}  // Attente du périphérique prêt
+
+            *I2C_DATA_REG = data as u32;  // Charger les données
+            while *I2C_STATUS_REG & 0x02 == 0 {}  // Attente de la fin de l'envoi
+        }
+    }
+
+    // Lecture d'un octet sur le bus I2C
+    fn i2c_read_byte(addr: u8) -> u8 {
+        unsafe {
+            *I2C_DATA_REG = ((addr as u32) << 1) | 1;  // Adresse en lecture
+            while *I2C_STATUS_REG & 0x01 == 0 {}  // Attente du périphérique prêt
+
+            *I2C_DATA_REG as u8  // Retourner les données
+        }
+    }
+
     // Code principal pour RISC-V
     #[no_mangle]
     pub extern "C" fn main() -> ! {
@@ -113,6 +146,12 @@ mod riscv {
 
             gpio_write(GPIO_CS, true);  // Désélectionner le périphérique SPI (mettre CS à HIGH)
         }
+
+        i2c_init();
+        let addr = 0x3C;  // Adresse du périphérique
+        i2c_write_byte(addr, 0x55);  // Envoyer un octet
+        let received = i2c_read_byte(addr);  // Lire un octet
+        loop {}
     }
 }
 
@@ -129,6 +168,12 @@ mod atmega {
     const SPCR: *mut u8 = 0x2C as *mut u8;   // Registre de contrôle SPI
     const SPSR: *mut u8 = 0x2D as *mut u8;   // Registre de statut SPI
     const SPDR: *mut u8 = 0x2E as *mut u8;   // Registre de données SPI
+
+    // Registres I2C pour ATmega328P
+    const TWBR: *mut u8 = 0x20 as *mut u8;
+    const TWSR: *mut u8 = 0x21 as *mut u8;
+    const TWCR: *mut u8 = 0x56 as *mut u8;
+    const TWDR: *mut u8 = 0x23 as *mut u8;
 
     // Fonctions pour configurer les GPIO
     fn set_gpio_output(pin: u8) {
@@ -180,6 +225,37 @@ mod atmega {
         unsafe { *SPDR }  // Lire la donnée reçue
     }
 
+    fn i2c_init() {
+        unsafe {
+            *TWBR = 32;
+            *TWSR = 0x00;
+            *TWCR = 1 << 6;  // Activer TWI
+        }
+    }
+
+    fn i2c_start() {
+        unsafe {
+            *TWCR = (1 << 7) | (1 << 5) | (1 << 2);  // Condition START
+            while (*TWCR & (1 << 7)) == 0 {}  // Attendre la fin
+        }
+    }
+
+    fn i2c_write(data: u8) {
+        unsafe {
+            *TWDR = data;
+            *TWCR = (1 << 7) | (1 << 2);
+            while (*TWCR & (1 << 7)) == 0 {}
+        }
+    }
+
+    fn i2c_read(ack: bool) -> u8 {
+        unsafe {
+            *TWCR = (1 << 7) | (1 << 2) | if ack { 1 << 6 } else { 0 };
+            while (*TWCR & (1 << 7)) == 0 {}
+            *TWDR
+        }
+    }
+
     // Fonction principale pour ATmega328P
     #[no_mangle]
     pub extern "C" fn main() -> ! {
@@ -214,5 +290,12 @@ mod atmega {
 
             gpio_write(PIN_CS, true);  // Désélectionner le périphérique SPI (mettre CS à HIGH)
         }
+
+        i2c_init();
+        i2c_start();
+        i2c_write(0x3C << 1);  // Adresse périphérique en écriture
+        i2c_write(0x55);  // Donnée
+        loop {}
+
     }
 }
