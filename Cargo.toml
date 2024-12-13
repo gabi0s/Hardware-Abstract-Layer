@@ -1,0 +1,28 @@
+[package]
+name = "hal"
+version = "0.1.0"
+edition = "2021"
+# Pour indiquer que le projet utilise no_std
+crate-type = ["lib"]
+
+
+riscv = { version = "0.7.0" }   # Crate générique pour manipuler des opérations RISC-V
+riscv-rt = { version = "0.8.0" }
+
+
+[profile.dev]
+panic = "abort"
+opt-level = 1
+debug = 2
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+
+[unstable]
+build-std = ["core"]
+
+[features]
+atmega = []
+riscv = []
+
