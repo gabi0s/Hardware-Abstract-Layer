@@ -82,3 +82,16 @@ cargo +nightly build -Z build-std=core,alloc --target riscv64gc-unknown-none-elf
 2. **Configuration des cibles** : Configurer les cibles pour l'ESP32 et l'ATmega328P a demandé une attention particulière. Nous avons dû vérifier que les toolchains appropriées étaient bien installées et que les cibles étaient correctement intégrées à notre environnement Rust.
 
 3. **Mode no_std** : Travailler en mode no_std a posé des défis supplémentaires, comme l'absence de certaines fonctionnalités de la bibliothèque standard. Nous avons dû utiliser des bibliothèques adaptées aux systèmes embarqués et bien comprendre les limites de ce type de développement sans allocation dynamique.
+
+
+
+
+
+
+
+[CORRECTION SPI] (don't hesitate to remove this part)
+You should implement the peripheral/slave mode as well (not only the controler/master mode).
+You could organize your project into multiple file and folder (module file/folder for example).
+For your RISC target, you should abstract the modification of register. You need to adapt your code to a specific target :
+- If you don't want to choose a specific esp32, you have to make function that are generic enough, and that cover the differents types of esp32 (you have to adapt the multiple hardware yourself, not letting the user do it)
+- You can choose a specific target, and design your HAL to it.
