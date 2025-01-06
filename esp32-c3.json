@@ -1,0 +1,15 @@
+{
+    "arch": "riscv32",
+    "cpu": "rv32imc",
+    "data-layout": "e-m:e-p:32:32-i64:64-n32-S128",
+    "llvm-target": "riscv32-unknown-elf",
+    "linker": "riscv32-esp-elf-gcc",
+    "linker-flavor": "gcc",
+    "max-atomic-width": 32,
+    "os": "none",
+    "panic-strategy": "abort",
+    "relocation-model": "static",
+    "target-pointer-width": "32",
+    "vendor": "espressif"
+  }
+  

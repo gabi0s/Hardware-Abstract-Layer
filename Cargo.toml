@@ -1,31 +1,16 @@
 [package]
 name = "hal"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-# Pour indiquer que le projet utilise no_std
-crate-type = ["lib"]
 
 [dependencies]
-riscv = { version = "0.7.0" }   # Crate générique pour manipuler des opérations RISC-V
-riscv-rt = { version = "0.8.0" }
-#I2C
-riscv-hal = { version = "0.4.0", optional = true } # HAL pour RISC-V (ESP32)
-avr-hal = { version = "0.5.0", optional = true }  # HAL pour ATmega328P
-
-
-[profile.dev]
-panic = "abort"
-opt-level = 1
-debug = 2
-
-[profile.release]
-panic = "abort"
-opt-level = "s"
-
-[unstable]
-build-std = ["core"]
+riscv = { version = "0.7.0", optional = true }
+riscv-rt = { version = "0.8.0", optional = true }
+embedded-hal = "0.2.6"
 
 [features]
-atmega = ["avr-hal"]
-riscv = ["riscv-hal"]
+riscv = ["riscv", "riscv-rt"]
+atmega = []
 
+[build]
+target = "riscv32-unknown-none-elf"
