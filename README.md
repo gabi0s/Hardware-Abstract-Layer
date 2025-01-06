@@ -21,13 +21,7 @@ Ce projet implémente une couche d'abstraction matérielle (HAL) pour interagir 
 
 Le projet est conçu pour fonctionner en mode `no_std` et utilise Rust avec des fonctionnalités spécifiques pour chaque architecture.
 
----
 
-## Fonctionnalités
-- **GPIO** : Lecture et écriture sur les broches numériques.
-- **SPI** : Modes maître et esclave pour la communication série.
-- **I2C** : Envoi et réception de données.
-- **UART** : Communication série bidirectionnelle.
 
 ---
 
@@ -111,11 +105,97 @@ Ensuite :
 ```bash
 git push origin master
 ```
-
 ---
 
-## Notes Supplémentaires
-- Le projet utilise des abstractions pour les registres afin de couvrir plusieurs variantes d'ESP32.
+## Fonctionnalités
+- **GPIO** : Lecture et écriture sur les broches numériques.
+- **SPI** : Modes maître et esclave pour la communication série.
+- **I2C** : Envoi et réception de données.
+- **UART** : Communication série bidirectionnelle.
+
+### GPIO (General Purpose Input/Output)
+Le module GPIO permet de configurer les broches en mode sortie et de contrôler leur état (haut ou bas).
+
+#### Choix d’implémentation
+- **RISC-V** : Les registres GPIO sont abstraits via des adresses mémoires fixes.
+- **ATmega328P** : Les registres PORTB et DDRB ont été utilisés pour configurer et manipuler les broches.
+
+#### Fonctionnalités principales
+- Configuration des GPIO (sortie uniquement).
+- Contrôle du niveau logique d'une broche spécifique.
+
+#### Exemple d'utilisation
+- **RISC-V** : 
+  ```rust
+  gpio::riscv::gpio_write(2, true); // Active la broche 2
+  ```
+
+
+### SPI (Serial Peripheral Interface)
+Le module SPI prend en charge les modes Maître et Esclave pour permettre la communication entre périphériques via un bus série.
+
+#### Choix d’implémentation
+- **RISC-V** : L'initialisation et la gestion SPI sont abstraites à l'aide de registres mémoires spécifiques.
+- **ATmega328P** : Les registres SPCR (SPI Control Register) ont été utilisés pour configurer le périphérique SPI.
+
+#### Fonctionnalités principales
+- Initialisation du SPI en mode Maître et Esclave.
+- Envoi et réception de données.
+
+#### Exemple d'utilisation
+- **RISC-V** : 
+```rust
+spi::riscv::spi_send(0xA5); // Envoie une donnée en mode Maître 
+```
+
+- **ATmega328P** : 
+```rust
+spi::atmega::spi_init(); // Initialise le module SPI
+```
+
+
+### UART (Universal Asynchronous Receiver-Transmitter)
+Le module UART offre une communication série bidirectionnelle, utile pour le débogage ou l'interaction avec des périphériques externes.
+
+#### Choix d’implémentation
+- **RISC-V** : Gestion via les registres de contrôle et de données UART.
+- **ATmega328P** : Configuration des registres UBRR0 pour définir le baud rate.
+
+#### Fonctionnalités principales
+- Initialisation du module UART.
+- Envoi et réception de données.
+
+#### Exemple d'utilisation
+- **RISC-V** : 
+```rust
+uart::riscv::uart_send(b"Hello, UART!\n");
+```
+- **ATmega328P** : 
+```rust
+uart::atmega::uart_receive();
+```
+
+
+### I2C (Inter-Integrated Circuit)
+Le module I2C permet la communication entre un Maître et un ou plusieurs Esclaves via un bus partagé.
+
+#### Choix d’implémentation
+- **RISC-V** : Abstraction via un registre de contrôle spécifique.
+- **ATmega328P** : Configuration des registres TWBR pour contrôler la vitesse du bus I2C.
+
+#### Fonctionnalités principales
+- Initialisation du bus I2C.
+- Envoi et réception de données.
+
+#### Exemple d'utilisation
+- **RISC-V** : 
+```rust
+i2c::riscv::i2c_init();
+```
+- **ATmega328P** : 
+```rust
+i2c::atmega::i2c_write(0x55); // Envoie une donnée à un Esclave
+```
 
 ---
 
